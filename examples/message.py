@@ -1,7 +1,7 @@
 from TikTokLive import TikTokLiveClient
 from TikTokLive.types.events import CommentEvent
 
-client = TikTokLiveClient("@satisfyy.me")
+client = TikTokLiveClient("@shelbylynnparker0")
 
 
 async def sign_url(raw_url: str, session_id: str):

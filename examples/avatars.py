@@ -99,7 +99,7 @@ class ProfileImage:
 
 
 # Instantiate the client with the user's username
-client: TikTokLiveClient = TikTokLiveClient(unique_id="@planlessvids")
+client: TikTokLiveClient = TikTokLiveClient(unique_id="@enheesd532")
 
 
 @client.on("comment")

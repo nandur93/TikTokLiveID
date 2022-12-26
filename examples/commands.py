@@ -89,7 +89,7 @@ class TikTokLiveCommandClient(TikTokLiveClient):
         self.loop.run_in_executor(ThreadPoolExecutor(), functools.partial(self.play_sound, _fp))
 
 
-client: TikTokLiveCommandClient = TikTokLiveCommandClient("@amazingviddeos")
+client: TikTokLiveCommandClient = TikTokLiveCommandClient("@enheesd532")
 
 
 @client.on("/speak")
@@ -118,4 +118,4 @@ if __name__ == '__main__':
     
     """
 
-    client.run(session_id="SESSION_ID_HERE")
+    client.run(session_id="f2ddd5780ff421bade923c567dc61cb7")

@@ -10,7 +10,8 @@ from TikTokLive import TikTokLiveClient
 from TikTokLive.types.events import CommentEvent
 
 author_font = str("examples\Futura-Maxi-CGBold-Regular.otf")
-background = pygame.image.load('examples\image-181.png')
+background = pygame.image.load('examples\img_comment.png')
+favicon_game = pygame.image.load('examples\icon_comment.png')
 
 class Comment:
     """
@@ -117,7 +118,8 @@ class DisplayCase:
 
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("TikTok LIVE - Display Case Demo")
+        pygame.display.set_caption("CommentRealLive")
+        pygame.display.set_icon(favicon_game)
 
         self._running = True
         await self.__screen_loop()
@@ -205,7 +207,7 @@ if __name__ == '__main__':
 
 
     loop: AbstractEventLoop = asyncio.get_event_loop()
-    client: TikTokLiveClient = TikTokLiveClient("@skintific_id", loop=loop)
+    client: TikTokLiveClient = TikTokLiveClient("@ewing.3gp", loop=loop)
     client.add_listener("comment", on_comment)
     display: DisplayCase = DisplayCase(loop)
     loop.create_task(client.start())

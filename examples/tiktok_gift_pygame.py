@@ -1,4 +1,5 @@
 import asyncio
+from doctest import Example
 import io
 from asyncio import AbstractEventLoop
 from typing import List, Optional
@@ -7,18 +8,18 @@ import aiohttp
 import pygame
 from PIL import Image, ImageDraw, ImageFilter
 from TikTokLive import TikTokLiveClient
-from TikTokLive.types.events import CommentEvent
+from TikTokLive.types.events import GiftEvent
 
 author_font = str("examples\Futura-Maxi-CGBold-Regular.otf")
-background = pygame.image.load('examples\image-181.png')
+favicon_game = pygame.image.load('examples\icon_gift.png')
 
-class Comment:
+class Gift:
     """
     Comment object for displaying to screen
     
     """
 
-    def __init__(self, author: str, text: str, image: bytes):
+    def __init__(self, image: bytes):
         """
         Initialize comment object
         
@@ -27,15 +28,11 @@ class Comment:
         :param image: Comment image (as bytes)
         
         """
-        self.author: str = author
-        self.text: str = text
-        self.name: pygame.surface = pygame.font.SysFont(author_font, 35, bold=False).render(self.author, True, (255, 0, 80))
-        self.comment: pygame.surface = pygame.font.SysFont("Segoe UI Emoji", 35, bold=False).render(self.text, True, (0, 242, 234))
         self.icon: Optional[pygame.image] = None
 
         try:
             image = self.__mask_circle_transparent(Image.open(io.BytesIO(image)), 2)
-            self.icon = pygame.transform.scale(pygame.image.frombuffer(image.tobytes(), image.size, image.mode), (75, 75))
+            self.icon = pygame.transform.scale(pygame.image.frombuffer(image.tobytes(), image.size, image.mode), (200, 200))
         except:
             pass
 
@@ -51,10 +48,10 @@ class Comment:
         
         """
 
-        offset += blur_radius * 1
+        offset += blur_radius * 0
         mask = Image.new("L", original.size, 0)
         draw = ImageDraw.Draw(mask)
-        draw.ellipse((offset, offset, original.size[0] - offset, original.size[1] - offset), fill=255)
+        draw.rectangle((offset, offset, original.size[0] - offset, original.size[1] - offset), fill=255)
         mask = mask.filter(ImageFilter.GaussianBlur(blur_radius))
 
         result = original.copy()
@@ -74,9 +71,7 @@ class Comment:
 
         # If exists
         if self.icon:
-            screen.blit(self.icon, (x + 0, y - 5))
-        screen.blit(self.name, (x + 100, y + 5)) #jarak profil_pic ke nama
-        screen.blit(self.comment, (x + 100, y + self.comment.get_height())) #jarak profil ke komentar
+            screen.blit(self.icon, (x, y))
         # screen.blit(self.name, (x + 125, y)) #jarak profil_pic ke nama
         # screen.blit(self.comment, (x + self.name.get_width() + 135, y + self.comment.get_height() / 4)) #jarak profil ke komentar
 
@@ -87,7 +82,7 @@ class DisplayCase:
     
     """
 
-    def __init__(self, loop: AbstractEventLoop, height: int = 720, width: int = 1280):
+    def __init__(self, loop: AbstractEventLoop, height: int = 200, width: int = 200):
     #def __init__(self, loop: AbstractEventLoop, height: int = 480, width: int = 720):
         """
         Initialize a display case
@@ -105,8 +100,8 @@ class DisplayCase:
         self.screen: pygame.display = pygame.display.set_mode((width, height))
         self._running: bool = True
         self.screen: pygame.display = pygame.display.set_mode((self.width, self.height))
-        self.queue: List[CommentEvent] = list()
-        self.active: List[Comment] = list()
+        self.queue: List[GiftEvent] = list()
+        self.active: List[Gift] = list()
 
     async def start(self):
         """
@@ -117,7 +112,8 @@ class DisplayCase:
 
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("TikTok LIVE - Display Case Demo")
+        pygame.display.set_caption("GiftRealLife")
+        pygame.display.set_icon(favicon_game)
 
         self._running = True
         await self.__screen_loop()
@@ -139,11 +135,11 @@ class DisplayCase:
         
         """
 
-        comment = self.queue.pop(0)
+        like = self.queue.pop(0)
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(comment.user.profilePicture.avatar_url) as request:
-                c = Comment(author=comment.user.nickname, text=comment.comment, image=await request.read())
+            async with session.get(like.user.profilePicture.avatar_url) as request:
+                c = Gift(image=await request.read())
                 self.active.insert(0, c)
 
     async def __screen_loop(self):
@@ -156,7 +152,6 @@ class DisplayCase:
         while self._running:
             # Clear screen
             self.screen.fill((0, 0, 0))
-            self.screen.blit(background,(0, 0))
 
             # Get events
             events: List[pygame.event] = pygame.event.get()
@@ -166,10 +161,10 @@ class DisplayCase:
                     return
 
             # Enumerate through & display data
-            for idx, comment in enumerate(self.active):
-                y: int = int(self.height - (15 + ((idx + 1) * 80)))#jarak antar chat
+            for idx, like in enumerate(self.active):
+                y: int = int(self.height - (idx + 1) * 199)#jarak antar chat
                 if y > 0:
-                    comment.blit(self.screen, 20, y)
+                    like.blit(self.screen, 0, y) #jarak picture ke border kiri
 
             # Pop from the queue
             if len(self.queue) > 0:
@@ -193,7 +188,7 @@ if __name__ == '__main__':
     """
 
 
-    async def on_comment(comment: CommentEvent):
+    async def on_gift(gift: Gift):
         """
         Add to the display case queue on comment
         :param comment: Comment event
@@ -201,12 +196,12 @@ if __name__ == '__main__':
 
         """
 
-        display.queue.append(comment)
+        display.queue.append(gift)
 
 
     loop: AbstractEventLoop = asyncio.get_event_loop()
-    client: TikTokLiveClient = TikTokLiveClient("@skintific_id", loop=loop)
-    client.add_listener("comment", on_comment)
+    client: TikTokLiveClient = TikTokLiveClient("@ewing.3gp", loop=loop)
+    client.add_listener("gift", on_gift)
     display: DisplayCase = DisplayCase(loop)
     loop.create_task(client.start())
     loop.run_until_complete(display.start())
