@@ -9,9 +9,10 @@ import pygame
 from PIL import Image, ImageDraw, ImageFilter
 from TikTokLive import TikTokLiveClient
 from TikTokLive.types.events import GiftEvent
+from nandur_lib import *
 
 author_font = str("examples\Futura-Maxi-CGBold-Regular.otf")
-favicon_game = pygame.image.load('examples\icon_gift.png')
+favicon_game = pygame.image.load('examples\Img\Icons\icon_gift.png')
 
 class Gift:
     """
@@ -135,12 +136,25 @@ class DisplayCase:
         
         """
 
-        like = self.queue.pop(0)
+        gift = self.queue.pop(0)
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(like.user.profilePicture.avatar_url) as request:
+            async with session.get(gift.user.profilePicture.avatar_url) as request:
                 c = Gift(image=await request.read())
                 self.active.insert(0, c)
+                show_event_picture(gift.user.profilePicture.avatar_url, 'GIFT')
+                    # If it's type 1 and the streak is over
+                if gift.gift.gift_type == 1:
+                    if gift.gift.repeat_end == 1:
+                        print(f"{gift.user.uniqueId} sent {gift.gift.repeat_count}x \"{gift.gift.extended_gift.name}\"")
+                        print(f"{gift.user.uniqueId} sent {gift.gift.repeat_count}x \"{gift.gift.extended_gift.diamond_count}\"")
+                        print(f"{gift.user.uniqueId} sent {gift.gift.repeat_count}x \"{gift.gift.giftDetails.giftImage.giftPictureUrl}\"")
+                        show_event_picture(gift.gift.giftDetails.giftImage.giftPictureUrl, 'GIFT_NAME')
+
+                # It's not type 1, which means it can't have a streak & is automatically over
+                elif gift.gift.gift_type != 1:
+                    print(f"{gift.user.uniqueId} sent \"{gift.gift.extended_gift.name}\"")
+                    show_event_picture(gift.gift.giftDetails.giftImage.giftPictureUrl, 'GIFT_NAME')
 
     async def __screen_loop(self):
         """
@@ -171,7 +185,7 @@ class DisplayCase:
                 self.loop.create_task(self.__pop_queue())
 
             # Cap active at 50 items
-            self.active = self.active[:50]
+            self.active = self.active[:1]
 
             pygame.display.update()
             await asyncio.sleep(0.1)
@@ -187,6 +201,7 @@ if __name__ == '__main__':
     
     """
 
+    tiktok_id = tiktok_id_target()
 
     async def on_gift(gift: Gift):
         """
@@ -200,7 +215,7 @@ if __name__ == '__main__':
 
 
     loop: AbstractEventLoop = asyncio.get_event_loop()
-    client: TikTokLiveClient = TikTokLiveClient("@ewing.3gp", loop=loop)
+    client: TikTokLiveClient = TikTokLiveClient(tiktok_id, loop=loop)
     client.add_listener("gift", on_gift)
     display: DisplayCase = DisplayCase(loop)
     loop.create_task(client.start())

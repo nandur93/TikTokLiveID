@@ -1,37 +1,34 @@
 import asyncio
+import time
 from doctest import Example
 from enum import unique
-from nandur_lib import *
 import io
-from time import sleep
 from asyncio import AbstractEventLoop
 from typing import List, Optional
 
 import aiohttp
 import pygame
-from pygame import mixer
 from PIL import Image, ImageDraw, ImageFilter
 from TikTokLive import TikTokLiveClient
-from TikTokLive.types.events import LikeEvent
-
-from configparser import ConfigParser
+from TikTokLive.types.events import JoinEvent
+from nandur_lib import *
 
 author_font = str("Segoe UI Emoji") #font
-favicon_game = pygame.image.load('examples\Img\Icons\icon_like.png')
+favicon_game = pygame.image.load('examples\Img\Icons\icon_join.png')
 
-class Like:
+class Join:
     """
-    Like object for displaying to screen
+    Comment object for displaying to screen
     
     """
 
     def __init__(self, author: str, uniqueid: str, image: bytes):
         """
-        Initialize like object
+        Initialize comment object
         
         :param author: Author name
         :param uniqueid: Author nickname
-        :param image: Like image (as bytes)
+        :param image: Comment image (as bytes)
         
         """
         self.icon: Optional[pygame.image] = None
@@ -112,8 +109,8 @@ class DisplayCase:
         self.screen: pygame.display = pygame.display.set_mode((width, height))
         self._running: bool = True
         self.screen: pygame.display = pygame.display.set_mode((self.width, self.height))
-        self.queue: List[LikeEvent] = list()
-        self.active: List[Like] = list()
+        self.queue: List[JoinEvent] = list()
+        self.active: List[Join] = list()
 
     async def start(self):
         """
@@ -124,7 +121,7 @@ class DisplayCase:
 
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("LikeTikLive")
+        pygame.display.set_caption("JoinTokLive")
         pygame.display.set_icon(favicon_game)
 
         self._running = True
@@ -147,27 +144,15 @@ class DisplayCase:
         
         """
 
-        like = self.queue.pop(0)
+        join = self.queue.pop(0)
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(like.user.profilePicture.avatar_url) as request:
-                print(like.user.profilePicture.avatar_url)
-                print('like count: '+str(like.likeCount))
-                print('total likes: '+str(like.totalLikeCount))
-                print(like.user.is_following)
-                c = Like(author=like.user.nickname, uniqueid='@'+like.user.uniqueId, image=await request.read())
+            async with session.get(join.user.profilePicture.avatar_url) as request:
+                print(join.user.profilePicture.avatar_url)
+                print(join.user.nickname)
+                show_event_picture(join.user.profilePicture.avatar_url, 'JOIN')
+                c = Join(author=join.user.nickname, uniqueid='@'+join.user.uniqueId, image=await request.read())
                 self.active.insert(0, c)
-
-                user_nickname = like.user.nickname
-                user_uniqueID = like.user.uniqueId
-                user_profile_picture = like.user.profilePicture.avatar_url
-                total_like_count = str(like.totalLikeCount)
-                # load image directly to Aximmetry
-                show_event_picture(user_profile_picture, 'LIKE')
-                save_tiktok_event_to_text_file('like_username', '@'+str(user_uniqueID))
-                save_tiktok_event_to_text_file('like_counter', total_like_count)
-                # read aloud user nickname
-                read_username(user_nickname)
 
     async def __screen_loop(self):
         """
@@ -214,7 +199,8 @@ if __name__ == '__main__':
     
     """
     tiktok_id = tiktok_id_target()
-    async def on_like(like: LikeEvent):
+    print('tar: '+str(tiktok_id))
+    async def on_join(join: JoinEvent):
         """
         Add to the display case queue on comment
         :param comment: Comment event
@@ -222,12 +208,14 @@ if __name__ == '__main__':
 
         """
 
-        display.queue.append(like)
+        display.queue.append(join)
+        # play_mp3_file('Notification')
+        # read_username(join.user.nickname, 'id', 'co.id', False)
+        # show_profile_picture(join.user.profilePicture.avatar_url, 'join_profile.jpeg')
 
-    print(tiktok_id)
     loop: AbstractEventLoop = asyncio.get_event_loop()
     client: TikTokLiveClient = TikTokLiveClient(tiktok_id, loop=loop)
-    client.add_listener("like", on_like)
+    client.add_listener("join", on_join)
     display: DisplayCase = DisplayCase(loop)
     loop.create_task(client.start())
     loop.run_until_complete(display.start())

@@ -102,7 +102,7 @@ class DonationSoundClient(TikTokLiveClient):
         return self.__sounds
 
 
-client: DonationSoundClient = DonationSoundClient("@theeupcycler", sound_debug=True)
+client: DonationSoundClient = DonationSoundClient("@goodgoods188", sound_debug=True)
 
 
 @client.on("follow")
@@ -114,7 +114,7 @@ async def on_follow(event: FollowEvent):
     :return: None
 
     """
-    client.manually_play_sound(f"./sounds/enchanted.wav")
+    client.manually_play_sound(f"examples\DonationSounds\sounds\enchanted.wav")
 
 
 if __name__ == '__main__':
